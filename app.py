@@ -1,72 +1,69 @@
-from flask import request, jsonify
-from config import create_app, db
-from models import Chamado
+from flask import Flask, jsonify, request, render_template
+from flask_sqlalchemy import SQLAlchemy
+from models import db, Chamado
 from datetime import datetime
 import pytz
 
-BRASILIA = pytz.timezone('America/Sao_Paulo')
+# Configuração do Flask
+app = Flask(
+    __name__,
+    template_folder="frontend/templates",
+    static_folder="frontend/static"
+)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:@localhost/gestao_chamados'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-app = create_app()
+db.init_app(app)
 
-with app.app_context():
-    db.create_all()
+# Servir o front-end
+@app.route('/')
+def index():
+    return render_template("index.html")
 
-# POST /chamados
-@app.route('/chamados', methods=['POST'])
-def criar_chamado():
-    dados = request.json
-    chamado = Chamado(
-        cliente=dados['cliente'],
-        email=dados['email'],
-        categoria=dados['categoria'],
-        descricao=dados['descricao']
-    )
-    db.session.add(chamado)
-    db.session.commit()
-    return jsonify({'mensagem': 'Chamado criado'}), 201
-
-# GET /chamados
+# Listar todos os chamados
 @app.route('/chamados', methods=['GET'])
 def listar_chamados():
     chamados = Chamado.query.all()
-    return jsonify([
-        {
-            'id': c.id,
-            'cliente': c.cliente,
-            'email': c.email,
-            'categoria': c.categoria,
-            'descricao': c.descricao,
-            'status': c.status,
-            'data_abertura': c.data_abertura.strftime('%Y-%m-%d %H:%M:%S'),
-            'data_fechamento': str(c.data_fechamento) if c.data_fechamento else None
-        } for c in chamados
-    ])
-
-# GET /chamados/<id>
-@app.route('/chamados/<int:id>', methods=['GET'])
-def get_chamado(id):
-    c = Chamado.query.get_or_404(id)
-    return jsonify({
+    return jsonify([{
         'id': c.id,
         'cliente': c.cliente,
         'email': c.email,
         'categoria': c.categoria,
         'descricao': c.descricao,
         'status': c.status,
-        'data_abertura': c.data_abertura.strftime('%Y-%m-%d %H:%M:%S'),
-        'data_fechamento': str(c.data_fechamento) if c.data_fechamento else None
-    })
+        'data_abertura': c.data_abertura.strftime("%Y-%m-%d %H:%M:%S") if c.data_abertura else None,
+        'data_fechamento': c.data_fechamento.strftime("%Y-%m-%d %H:%M:%S") if c.data_fechamento else None
+    } for c in chamados])
 
-# PUT /chamados/<id>
+# Criar chamado
+@app.route('/chamados', methods=['POST'])
+def criar_chamado():
+    data = request.json
+    print("POST recebido:", data)  # debug temporário
+    chamado = Chamado(
+        cliente=data['cliente'],
+        email=data['email'],
+        categoria=data['categoria'],
+        descricao=data['descricao']
+    )
+    db.session.add(chamado)
+    db.session.commit()
+    return jsonify({'mensagem': 'Chamado criado'}), 201
+
+# Atualizar/fechar chamado
 @app.route('/chamados/<int:id>', methods=['PUT'])
 def atualizar_chamado(id):
-    c = Chamado.query.get_or_404(id)
-    dados = request.json
-    c.status = dados.get('status', c.status)
-    if c.status.lower() == 'fechado':
-        c.data_fechamento = datetime.now(BRASILIA)
+    data = request.json
+    chamado = Chamado.query.get_or_404(id)
+
+    if 'status' in data:
+        chamado.status = data['status']
+        if data['status'] == "Fechado":
+            tz = pytz.timezone('America/Sao_Paulo')
+            chamado.data_fechamento = datetime.now(tz)
+
     db.session.commit()
     return jsonify({'mensagem': 'Chamado atualizado'})
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)

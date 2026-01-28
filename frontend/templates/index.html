@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Chamados</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Gestão de Chamados</h1>
+
+        <form id="formChamado">
+            <div>
+                <label for="cliente">Cliente:</label>
+                <input type="text" id="cliente" required>
+            </div>
+            <div>
+                <label for="email">Email:</label>
+                <input type="email" id="email" required>
+            </div>
+            <div>
+                <label for="categoria">Categoria:</label>
+                <select id="categoria" required>
+                    <option value="Suporte">Suporte</option>
+                    <option value="Acesso">Acesso</option>
+                    <option value="Financeiro">Financeiro</option>
+                </select>
+            </div>
+            <div>
+                <label for="descricao">Descrição:</label>
+                <textarea id="descricao" rows="3" required></textarea>
+            </div>
+            <button type="submit">Criar Chamado</button>
+        </form>
+
+        <hr>
+
+        <h2>Chamados</h2>
+        <div id="chamadosList" class="list-group">
+            <!-- Chamados vão aparecer aqui -->
+        </div>
+    </div>
+</body>
+</html>
