@@ -65,5 +65,14 @@ def atualizar_chamado(id):
     db.session.commit()
     return jsonify({'mensagem': 'Chamado atualizado'})
 
+
+@app.route('/chamados/<int:id>', methods=['DELETE'])
+def deletar_chamado(id):
+    chamado = Chamado.query.get_or_404(id)
+    db.session.delete(chamado)
+    db.session.commit()
+    return jsonify({'mensagem': 'Chamado deletado'}), 200
+
+
 if __name__ == "__main__":
     app.run(debug=True)

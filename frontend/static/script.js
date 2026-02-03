@@ -1,28 +1,35 @@
-const apiUrl = "/chamados"; // relativo, funciona integrado ao Flask
+const apiUrl = "/chamados"; // relativo, integrado ao Flask
 
-// Função para listar todos os chamados
+// ===============================
+// LISTAR CHAMADOS
+// ===============================
 async function getChamados() {
     try {
         const res = await fetch(apiUrl);
         if (!res.ok) throw new Error("Erro ao buscar chamados");
-        const chamados = await res.json();
 
+        const chamados = await res.json();
         const chamadosList = document.getElementById("chamadosList");
         chamadosList.innerHTML = "";
 
         chamados.forEach(chamado => {
             const item = document.createElement("div");
-            item.className = "list-group-item d-flex justify-content-between align-items-center";
+            item.className = "list-group-item";
 
             item.innerHTML = `
-                <div>
-                    <strong>${chamado.cliente}</strong> - ${chamado.categoria} <br>
-                    Status: ${chamado.status} <br>
-                    Abertura: ${chamado.data_abertura} <br>
+                <div class="chamado-info">
+                    <strong>${chamado.cliente}</strong> - ${chamado.categoria}<br>
+                    Status: ${chamado.status}<br>
+                    Abertura: ${chamado.data_abertura}<br>
                     Fechamento: ${chamado.data_fechamento ? chamado.data_fechamento : "-"}
                 </div>
-                <div>
-                    ${chamado.status === "Aberto" ? `<button class="btn btn-success btn-sm" onclick="fecharChamado(${chamado.id})">Fechar</button>` : ""}
+
+                <div class="chamado-actions">
+                    ${chamado.status === "Aberto" 
+                        ? `<button class="btn-fechar" onclick="fecharChamado(${chamado.id})">Fechar</button>` 
+                        : ""
+                    }
+                    <button class="btn-delete" onclick="deletarChamado(${chamado.id})">Deletar</button>
                 </div>
             `;
 
@@ -33,7 +40,9 @@ async function getChamados() {
     }
 }
 
-// Função para criar chamado
+// ===============================
+// CRIAR CHAMADO
+// ===============================
 document.getElementById("formChamado").addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -52,13 +61,15 @@ document.getElementById("formChamado").addEventListener("submit", async (e) => {
         if (!res.ok) throw new Error("Erro ao criar chamado");
 
         document.getElementById("formChamado").reset();
-        getChamados(); // Atualiza a lista automaticamente
+        getChamados();
     } catch (err) {
         console.error(err);
     }
 });
 
-// Função para fechar chamado
+// ===============================
+// FECHAR CHAMADO
+// ===============================
 async function fecharChamado(id) {
     try {
         const res = await fetch(`${apiUrl}/${id}`, {
@@ -69,11 +80,33 @@ async function fecharChamado(id) {
 
         if (!res.ok) throw new Error("Erro ao fechar chamado");
 
-        getChamados(); // Atualiza a lista automaticamente
+        getChamados();
     } catch (err) {
         console.error(err);
     }
 }
 
-// Inicializa a lista de chamados ao carregar a página
+// ===============================
+// DELETAR CHAMADO
+// ===============================
+async function deletarChamado(id) {
+    const confirmacao = confirm("Tem certeza que deseja deletar este chamado?");
+    if (!confirmacao) return;
+
+    try {
+        const res = await fetch(`${apiUrl}/${id}`, {
+            method: "DELETE"
+        });
+
+        if (!res.ok) throw new Error("Erro ao deletar chamado");
+
+        getChamados();
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+// ===============================
+// INICIALIZAÇÃO
+// ===============================
 getChamados();
